@@ -5,50 +5,45 @@ on:
     branches: [ main, dev, docker ]
   pull_request:
     branches: [ main, dev, docker ]
-  
-env:
-  DOCKERIO_USER: "${{ github.repository_owner }}"
 
 jobs:
-  build_within_docker:
+  build_pytorch_within_docker:
+    name: 'build pytorch within docker'
     runs-on: ubuntu-latest
-    concurrency: 
-      group: ${{ github.head_ref || github.run_id }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+    concurrency:
+      group: pytorch-${{ matrix.platform }}-${{ matrix.pythonlabel }}
       cancel-in-progress: true
     strategy:
-      max-parallel: 2
+      max-parallel: 4
       matrix:
-        platform: [linux/arm/v7, linux/arm64/v8]
-        pythonlabel: [3.10-bullseye, 3.11-bullseye, 3.9-bullseye]
-
-
+        platform: [ linux/arm/v7, linux/arm64/v8 ]
+        pythonlabel: [ 3.10-bullseye, 3.11-bullseye, 3.9-bullseye ]
 
     steps:
-    - 
-      uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    
-    - name: Build using Dockerfile 
-      run: |
-            docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag tmp --file ./Dockerfile .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: start container
-      run:
-        mkdir -p build_result
-        docker run -it --rm -v build_result:/out tmp 
-        ls -lah build_result/*
+      - name: Build using Dockerfile
+        run: |
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag tmp --file ./Dockerfile .
 
-    - name: Create artifact
-      uses: actions/upload-artifact@v3
+      - name: start container
+        run:
+          mkdir -p build_result
+          docker run -it --rm -v build_result:/out tmp
+          ls -lah build_result/*
 
-      with:
-        name: pytorch_${{ matrix.pythonlabel }}_${{ matrix.platform }}
-        path: build_result
-        retention-days: 5
+      - name: Create artifact
+        uses: actions/upload-artifact@v3
+
+        with:
+          name: pytorch_${{ matrix.pythonlabel }}_${{ matrix.platform }}
+          path: build_result
+          retention-days: 5
