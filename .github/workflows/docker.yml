@@ -10,8 +10,18 @@ env:
   DOCKERIO_USER: "${{ github.repository_owner }}"
 
 jobs:
-  first_build:
+  build_within_docker:
     runs-on: ubuntu-latest
+    concurrency: 
+      group: ${{ github.head_ref || github.run_id }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+      cancel-in-progress: true
+    strategy:
+      max-parallel: 2
+      matrix:
+        platform: [linux/arm/v7, linux/arm64/v8]
+        pythonlabel: [3.10-bullseye, 3.11-bullseye, 3.9-bullseye]
+
+
 
     steps:
     - 
@@ -27,4 +37,4 @@ jobs:
     
     - name: Build using Dockerfile 
       run: |
-            docker buildx build --platform=linux/arm/v7 --output "type=image" --build-arg pythonlabel=3.10-bullseye --build-arg GITHUB_USER=${{ github.repository_owner }} --file ./Dockerfile .
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --file ./Dockerfile .
