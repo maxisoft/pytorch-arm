@@ -37,4 +37,18 @@ jobs:
     
     - name: Build using Dockerfile 
       run: |
-            docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --file ./Dockerfile .
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag tmp --file ./Dockerfile .
+
+    - name: start container
+      run:
+        mkdir -p build_result
+        docker run -it --rm -v build_result:/out tmp 
+        ls -lah build_result/*
+
+    - name: Create artifact
+      uses: actions/upload-artifact@v3
+
+      with:
+        name: pytorch_${{ matrix.pythonlabel }}_${{ matrix.platform }}
+        path: build_result
+        retention-days: 5

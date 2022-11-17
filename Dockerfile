@@ -17,6 +17,15 @@ RUN apt-get update && apt-get install -y \
   git submodule update --init --recursive --depth 100 && \
   python -m pip install -U pyyaml future mock wheel cython && \
   python -m pip install -r requirements.txt && \
-  python setup.py build
+  python setup.py build && \
+  ls -lah build/ && \
+  cd build/lib.*/torch || cd build/lib/torch && \
+  ln -s _C.*.so _C.so || : && \
+  ln -s _dl.*.so _dl.so || : && \
+  ls -lah && \
+  cd ../../.. && \
+  python setup.py bdist_wheel && \
+  python setup.py install
 
-ENTRYPOINT [ "/bin/bash", "cp", "--archive", "/src/torch/build", "/out" ]
+
+ENTRYPOINT [ "/bin/bash", "cp", "--archive", "/src/torch", "/out" ]
