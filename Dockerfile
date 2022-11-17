@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
   git clone --depth 100 -b ${TORCHTAG} -- https://github.com/pytorch/pytorch.git && \
   cd pytorch && \
   git submodule update --init --recursive --depth 100 && \
-  python -m pip install -U pyyaml future mock wheel cython && \
+  python -m pip install pyyaml numpy -f https://ext.kmtea.eu/whl/stable.html --prefer-binary --no-index || python -m pip install --ignore-installed pyyaml numpy && \
+  python -m pip install -U future mock wheel cython && \
   python -m pip install -r requirements.txt && \
   python setup.py build && \
   ls -lah build/ && \
