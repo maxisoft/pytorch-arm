@@ -17,7 +17,7 @@ jobs:
       max-parallel: 4
       matrix:
         platform: [ linux/arm/v7, linux/arm64/v8 ]
-        pythonlabel: [ 3.10-bullseye, 3.11-bullseye, 3.9-bullseye ]
+        pythonlabel: [ 3.10-buster, 3.11-buster, 3.9-buster ]
 
     steps:
       - uses: actions/checkout@v2
