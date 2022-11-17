@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
   git clone --depth 100 -b ${TORCHTAG} -- https://github.com/pytorch/pytorch.git && \
   cd pytorch && \
   git submodule update --init --recursive --depth 100 && \
+  python -m pip install -U pyyaml future mock wheel && \
   python -m pip install -r requirements.txt && \
-  python3 setup.py build
+  python setup.py build
 
 ENTRYPOINT [ "/bin/bash", "cp", "--archive", "/src/torch/build", "/out" ]
