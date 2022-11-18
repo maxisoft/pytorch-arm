@@ -50,7 +50,7 @@ jobs:
               
               env_file = os.getenv('GITHUB_ENV')
               with open(env_file, "a") as ef:
-                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}_${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'.replace('/', '_').replace(' ', '_').replace('-', '').replace('.', ''), file=ef)
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
         shell: python
 
       - name: Cache docker
@@ -74,7 +74,7 @@ jobs:
 
       - name: Stage 3 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
 
       - run: |
             set -euo pipefail
