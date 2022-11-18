@@ -1,0 +1,48 @@
+diff --git a/torch/csrc/autograd/python_function.cpp b/torch/csrc/autograd/python_function.cpp
+index 39374f7..3d13d3f 100644
+--- a/torch/csrc/autograd/python_function.cpp
++++ b/torch/csrc/autograd/python_function.cpp
+@@ -495,7 +495,7 @@ static void _save_variables(
+       self->saved_variables.emplace_back(tensor, is_output);
+     } else {
+       throw torch::TypeError(
+-          "save_for_backward can only save variables, but argument %ld is of "
++          "save_for_backward can only save variables, but argument %zd is of "
+           "type %s",
+           i,
+           Py_TYPE(obj)->tp_name);
+diff --git a/torch/csrc/utils/python_arg_parser.h b/torch/csrc/utils/python_arg_parser.h
+index 9b23af5..7e47aca 100644
+--- a/torch/csrc/utils/python_arg_parser.h
++++ b/torch/csrc/utils/python_arg_parser.h
+@@ -587,7 +587,7 @@ inline void throw_intlist_exception(
+     PyObject* obj,
+     size_t idx) {
+   throw TypeError(
+-      "%s(): argument '%s' must be %s, but found element of type %s at pos %ld",
++      "%s(): argument '%s' must be %s, but found element of type %s at pos %zd",
+       args->signature.name.c_str(),
+       args->signature.params[i].name.c_str(),
+       args->signature.params[i].type_name().c_str(),
+@@ -748,7 +748,7 @@ inline std::vector<double> PythonArgs::getDoublelist(int i) {
+       res[idx] = THPUtils_unpackDouble(obj);
+     } catch (const std::exception& e) {
+       throw TypeError(
+-          "%s(): argument '%s' must be %s, but found element of type %s at pos %ld",
++          "%s(): argument '%s' must be %s, but found element of type %s at pos %zd",
+           signature.name.c_str(),
+           signature.params[i].name.c_str(),
+           signature.params[i].type_name().c_str(),
+diff --git a/third_party/pybind11/include/pybind11/detail/common.h b/include/pybind11/detail/common.h
+index 1da323f..d2f2ef7 100644
+--- a/third_party/pybind11/include/pybind11/detail/common.h
++++ b/third_party/pybind11/include/pybind11/detail/common.h
+@@ -407,7 +407,7 @@ using size_t = std::size_t;
+
+ template <typename IntType>
+ inline ssize_t ssize_t_cast(const IntType &val) {
+-    static_assert(sizeof(IntType) <= sizeof(ssize_t), "Implicit narrowing is not permitted.");
++    //static_assert(sizeof(IntType) <= sizeof(ssize_t), "Implicit narrowing is not permitted.");
+     return static_cast<ssize_t>(val);
+ }
+

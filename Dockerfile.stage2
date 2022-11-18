@@ -4,4 +4,5 @@ FROM --platform=$FROMPLATFORM torch:stage1
 
 RUN \
   cd pytorch && \
+  git apply --check ../arm.patch || : && \
   timeout --preserve-status --kill-after=330m --verbose 300m python setup.py || :

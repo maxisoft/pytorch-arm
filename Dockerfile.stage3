@@ -5,6 +5,7 @@ VOLUME [ "/out" ]
 
 RUN \
   cd pytorch && \
+  git apply --reject --allow-empty --recount ../arm.patch && \
   python setup.py build && \
   ls -lah build/ && \
   cd build/lib.*/torch || cd build/lib/torch && \
