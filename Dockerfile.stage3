@@ -1,5 +1,5 @@
-FROM torch:stage2
 ARG TARGETPLATFORM
+FROM --platform=${TARGETPLATFORM} torch:stage2
 
 VOLUME [ "/out" ]
 

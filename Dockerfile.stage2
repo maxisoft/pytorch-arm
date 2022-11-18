@@ -1,6 +1,6 @@
-FROM torch:stage1
-
 ARG TARGETPLATFORM
+FROM --platform=${TARGETPLATFORM} torch:stage1
+
 
 RUN \
   cd pytorch && \

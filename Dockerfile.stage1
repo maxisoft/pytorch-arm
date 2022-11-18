@@ -14,3 +14,4 @@ RUN apt-get update && apt-get install -y \
   git clone --depth 100 -b ${TORCHTAG} -- https://github.com/pytorch/pytorch.git && \
   cd pytorch && \
   git submodule update --init --recursive --depth 100
+
