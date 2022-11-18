@@ -3,6 +3,7 @@ ARG FROMPLATFORM=${TARGETPLATFORM}
 ARG FROMIMAGE
 FROM --platform=${FROMPLATFORM} ${FROMIMAGE}
 
+COPY arm.patch /src/torch/arm.patch
 RUN \
   cd pytorch && \
   git apply --check ../arm.patch || : && \
