@@ -1,5 +1,6 @@
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM torch:stage1
+ARG FROMPLATFORM=${TARGETPLATFORM}
+FROM --platform=$FROMPLATFORM torch:stage1
 
 RUN \
   cd pytorch && \
