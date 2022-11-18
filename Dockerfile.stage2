@@ -1,0 +1,7 @@
+FROM stage1
+
+ARG TARGETPLATFORM
+
+RUN \
+  cd pytorch && \
+  timeout --preserve-status --kill-after=330m --verbose 300m python setup.py || :
