@@ -36,8 +36,8 @@ jobs:
       - name: Verbose info
         run: |
               docker buildx du --verbose || :
-              docker system df -v --format '{{ .BuildCache | json }} || :
-              echo "${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}"
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Cache docker
         uses: actions/cache@v3
