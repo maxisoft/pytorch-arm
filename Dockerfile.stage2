@@ -1,4 +1,4 @@
-FROM stage1
+FROM torch:stage1
 
 ARG TARGETPLATFORM
 

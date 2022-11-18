@@ -1,4 +1,4 @@
-FROM stage2
+FROM torch:stage2
 ARG TARGETPLATFORM
 
 VOLUME [ "/out" ]

@@ -32,20 +32,20 @@ jobs:
 
       - name: Stage 1 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag stage1 --file ./Dockerfile.stage1 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag torch:stage1 --file ./Dockerfile.stage1 .
 
       - name: Stage 2 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag stage2 --file ./Dockerfile.stage2 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag torch:stage2 --file ./Dockerfile.stage2 .
 
       - name: Stage 3 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag stage3 --file ./Dockerfile.stage3 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --tag torch:stage3 --file ./Dockerfile.stage3 .
 
       - name: start container
         run:
           mkdir -p build_result
-          docker run -it --rm -v build_result:/out stage3
+          docker run -it --rm -v build_result:/out torch:stage3
           ls -lah build_result/*
 
       - name: Create artifact
