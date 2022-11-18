@@ -33,9 +33,25 @@ jobs:
       - name: Login into ghcr.io docker
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
+      - name: Verbose info
+        run: |
+              docker buildx du --verbose || :
+              docker system df -v --format '{{ .BuildCache | json }} || :
+              echo "${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}"
+
+      - name: Cache docker
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-build-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+          path: |
+                /var/lib/docker/buildkit
+                /var/lib/docker/overlay2
+
       - name: Stage 1 - Build using Dockerfile
         run: |
-          echo "${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}"
+          
           docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg FROMPLATFORM=${{ matrix.platform }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --file ./Dockerfile.stage1 .
 
       - name: Stage 2 - Build using Dockerfile
