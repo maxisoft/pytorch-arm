@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, dev, docker ]
 
+env:
+# torch version to build
+# keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
+  TORCHTAG: v1.13.0
+
 jobs:
   build_pytorch_within_docker:
     name: 'build pytorch within docker'
@@ -39,12 +44,21 @@ jobs:
               docker system df -v --format '{{ .BuildCache | json }}' || :
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
+      - name: setup env vars
+        run: |
+              import os
+              
+              env_file = os.getenv('GITHUB_ENV')
+              with open(env_file, "a") as ef:
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}_${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'.replace('/', '_').replace(' ', '_').replace('-', '').replace('.', ''), file=ef)
+        shell: python
+
       - name: Cache docker
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-build-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
           path: |
                 /var/lib/docker/buildkit
                 /var/lib/docker/overlay2
@@ -52,19 +66,19 @@ jobs:
       - name: Stage 1 - Build using Dockerfile
         run: |
           
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg FROMPLATFORM=${{ matrix.platform }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --file ./Dockerfile.stage1 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --file ./Dockerfile.stage1 .
 
       - name: Stage 2 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --file ./Dockerfile.stage2 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --file ./Dockerfile.stage2 .
 
       - name: Stage 3 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} --file ./Dockerfile.stage3 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
 
       - run: |
             set -euo pipefail
-            docker create -ti --platform ${{ matrix.platform }} --name dummy ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }} sh
+            docker create -ti --platform ${{ matrix.platform }} --name dummy ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} sh
             mkdir -p build_result
             docker cp -a dummy:/src/torch/. build_result
             ls -lah build_result
