@@ -11,8 +11,13 @@ env:
 # keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
   TORCHTAG: v1.13.0
 
-  REUSE_STAGE1: false
-  REUSE_STAGE2: false
+  REUSE_STAGE1: true
+  REUSE_STAGE2: true
+  REUSE_STAGE3: true
+  REUSE_STAGE4: false
+  REUSE_STAGE5: false
+  REUSE_STAGE6: false
+  REUSE_STAGE7: false
   DOCKER_CACHE_ID: 1
 
 jobs:
@@ -172,6 +177,266 @@ jobs:
       - name: Login into ghcr.io docker
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
+      - name: setup env vars
+        run: |
+              import os
+              
+              env_file = os.getenv('GITHUB_ENV')
+              with open(env_file, "a") as ef:
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+        shell: python
+
+      - name: Cache docker
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage3
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+
+      - name: Verbose info
+        run: |
+              docker info
+              echo ''
+              docker buildx du --verbose || :
+              echo ''
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo ''
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
+
+      - name: Download previous stage3
+        if: env.REUSE_STAGE3 == true
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} || :
+
+      - name: Stage3 - Build using Dockerfile
+        run: |
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
+          fi
+
+  build_stage4:
+    name: 'build pytorch within docker (stage4)'
+    needs: [ build_stage3 ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pytorch-${{ matrix.platform }}-${{ matrix.pythonlabel }}-stage4
+      cancel-in-progress: true
+    strategy:
+      max-parallel: 6
+      matrix:
+        platform: [ linux/arm/v7, linux/arm64/v8 ]
+        pythonlabel: [ 3.10-buster, 3.11-buster, 3.9-buster ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login into ghcr.io docker
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: setup env vars
+        run: |
+              import os
+              
+              env_file = os.getenv('GITHUB_ENV')
+              with open(env_file, "a") as ef:
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+        shell: python
+
+      - name: Cache docker
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage4
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+
+      - name: Verbose info
+        run: |
+              docker info
+              echo ''
+              docker buildx du --verbose || :
+              echo ''
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo ''
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
+
+      - name: Download previous stage4
+        if: env.REUSE_STAGE4 == true
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage4:${{ env.TAGNAME }} || :
+
+      - name: Stage4 - Build using Dockerfile
+        run: |
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage4:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage4:${{ env.TAGNAME }} --file ./Dockerfile.stage4 .
+          fi
+
+  build_stage5:
+    name: 'build pytorch within docker (stage5)'
+    needs: [ build_stage4 ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pytorch-${{ matrix.platform }}-${{ matrix.pythonlabel }}-stage5
+      cancel-in-progress: true
+    strategy:
+      max-parallel: 6
+      matrix:
+        platform: [ linux/arm/v7, linux/arm64/v8 ]
+        pythonlabel: [ 3.10-buster, 3.11-buster, 3.9-buster ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login into ghcr.io docker
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: setup env vars
+        run: |
+              import os
+              
+              env_file = os.getenv('GITHUB_ENV')
+              with open(env_file, "a") as ef:
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+        shell: python
+
+      - name: Cache docker
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage5
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+
+      - name: Verbose info
+        run: |
+              docker info
+              echo ''
+              docker buildx du --verbose || :
+              echo ''
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo ''
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
+
+      - name: Download previous stage5
+        if: env.REUSE_STAGE5 == true
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage5:${{ env.TAGNAME }} || :
+
+      - name: Stage5 - Build using Dockerfile
+        run: |
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage5:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage4:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage5:${{ env.TAGNAME }} --file ./Dockerfile.stage5 .
+          fi
+
+  build_stage6:
+    name: 'build pytorch within docker (stage6)'
+    needs: [ build_stage5 ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pytorch-${{ matrix.platform }}-${{ matrix.pythonlabel }}-stage6
+      cancel-in-progress: true
+    strategy:
+      max-parallel: 6
+      matrix:
+        platform: [ linux/arm/v7, linux/arm64/v8 ]
+        pythonlabel: [ 3.10-buster, 3.11-buster, 3.9-buster ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login into ghcr.io docker
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: setup env vars
+        run: |
+              import os
+              
+              env_file = os.getenv('GITHUB_ENV')
+              with open(env_file, "a") as ef:
+                print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+        shell: python
+
+      - name: Cache docker
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+        with:
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage6
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+
+      - name: Verbose info
+        run: |
+              docker info
+              echo ''
+              docker buildx du --verbose || :
+              echo ''
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo ''
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
+
+      - name: Download previous stage6
+        if: env.REUSE_STAGE6 == true
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage6:${{ env.TAGNAME }} || :
+
+      - name: Stage6 - Build using Dockerfile
+        run: |
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage6:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage5:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage6:${{ env.TAGNAME }} --file ./Dockerfile.stage6 .
+          fi
+
+  build_stage7:
+    name: 'build pytorch within docker (stage7)'
+    needs: [ build_stage6 ]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pytorch-${{ matrix.platform }}-${{ matrix.pythonlabel }}-stage7
+      cancel-in-progress: true
+    strategy:
+      max-parallel: 6
+      matrix:
+        platform: [ linux/arm/v7, linux/arm64/v8 ]
+        pythonlabel: [ 3.10-buster, 3.11-buster, 3.9-buster ]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login into ghcr.io docker
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
       - name: Verbose info
         run: |
               docker buildx du --verbose || :
@@ -191,17 +456,17 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage3
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage7
           restore-keys: |
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
-      - name: Stage 3 - Build using Dockerfile
+      - name: Stage7 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
+          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage6:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage7:${{ env.TAGNAME }} --file ./Dockerfile.stage7 .
 
       - run: |
             set -euo pipefail
-            docker create -ti --platform ${{ matrix.platform }} --name dummy ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} sh
+            docker create -ti --platform ${{ matrix.platform }} --name dummy ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage7:${{ env.TAGNAME }} sh
             mkdir -p build_result
             docker cp -a dummy:/src/torch/. build_result
             ls -lah build_result
