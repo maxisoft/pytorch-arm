@@ -11,8 +11,8 @@ env:
 # keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
   TORCHTAG: v1.13.0
 
-  REUSE_STAGE1: true
-  REUSE_STAGE2: true
+  REUSE_STAGE1: false
+  REUSE_STAGE2: false
 
 jobs:
   build_stage1:
@@ -59,7 +59,7 @@ jobs:
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
       - name: Download previous stage1
-        if: env.REUSE_STAGE1
+        if: env.REUSE_STAGE1 == true
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} || :
 
@@ -134,7 +134,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage2
-        if: env.REUSE_STAGE2
+        if: env.REUSE_STAGE2 == true
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} || :
 
