@@ -6,12 +6,12 @@ ARG TORCHTAG=v1.13.0
 ARG GITHUB_USER=maxisoft
 ARG REPO_NAME=pytorch-arm
 LABEL maintainer="github.com/${GITHUB_USER}" name="torch-arm" description="torch building container" org.opencontainers.image.description="torch building container" nimversion="$NIM_VERSION" url="https://github.com/${GITHUB_USER}/${REPO_NAME}" vcs-url="https://github.com/${GITHUB_USER}/${REPO_NAME}" org.opencontainers.image.source="https://github.com/${GITHUB_USER}/${REPO_NAME}"
-ENV DEBIAN_FRONTEND=noninteractive TORCHTAG=${TORCHTAG} GITHUB_USER=${GITHUB_USER} NO_CUDA=1 NO_DISTRIBUTED=1 NO_MKLDNN=1 USE_NCCL=0 BUILD_TEST=0 USE_ZSTD=1 USE_NUMPY=1 USE_SYSTEM_NCCL=0 USE_MPI=0 USE_GLOO=0 USE_TENSORPIPE=0 USE_DISTRIBUTED=0 USE_QNNPACK=0 USE_NNPACK=0
+ENV DEBIAN_FRONTEND=noninteractive TORCHTAG=${TORCHTAG} GITHUB_USER=${GITHUB_USER} NO_CUDA=1 NO_DISTRIBUTED=1 NO_MKLDNN=1 USE_NCCL=0 BUILD_TEST=0 USE_ZSTD=1 USE_NUMPY=1 USE_SYSTEM_NCCL=0 USE_ZMQ=1 USE_REDIS=1 USE_TBB=1 USE_FFTW=1 USE_GFLAGS=1 USE_GLOG=1 USE_LMDB=1 USE_NUMA=1
 WORKDIR /src/torch
 RUN apt-get update && apt-get install -y \
   automake autoconf libpng-dev nano \
   curl zip unzip libtool swig zlib1g-dev pkg-config git wget xz-utils \
-  libopenblas-dev libblas-dev m4 cmake g++ gcc libssl-dev build-essential && \
+  libopenblas-dev libblas-dev m4 cmake g++ gcc libssl-dev libczmq-dev fftw-dev redis libhiredis-dev libtbb-dev build-essential libgflags-dev libgoogle-glog-dev liblmdb-dev libnuma-dev && \
   git clone --depth 100 -b ${TORCHTAG} -- https://github.com/pytorch/pytorch.git && \
   cd pytorch && \
   git submodule update --init --recursive --depth 100 && \
