@@ -11,6 +11,9 @@ env:
 # keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
   TORCHTAG: v1.13.0
 
+  REUSE_STAGE1: true
+  REUSE_STAGE2: true
+
 jobs:
   build_stage1:
     name: 'build pytorch within docker (stage1)'
@@ -48,18 +51,23 @@ jobs:
         shell: python
 
       - name: Cache docker
-        uses: actions/cache@v3
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
         with:
           key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage1
           restore-keys: |
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
-          path: |
-                /var/lib/docker
+
+      - name: Download previous stage1
+        if: env.REUSE_STAGE1
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} || :
 
       - name: Stage 1 - Build using Dockerfile
         run: |
-          
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --file ./Dockerfile.stage1 .
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --file ./Dockerfile.stage1 .
+          fi
 
       - name: Verbose info
         run: |
@@ -98,12 +106,6 @@ jobs:
       - name: Login into ghcr.io docker
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-      - name: Verbose info
-        run: |
-              docker buildx du --verbose || :
-              docker system df -v --format '{{ .BuildCache | json }}' || :
-              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
-
       - name: setup env vars
         run: |
               import os
@@ -114,36 +116,33 @@ jobs:
         shell: python
 
       - name: Cache docker
-        uses: actions/cache@v3
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
         with:
           key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage2
           restore-keys: |
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
-          path: |
-                /var/lib/docker
+
+      - name: Verbose info
+        run: |
+              docker info
+              echo ''
+              docker buildx du --verbose || :
+              echo ''
+              docker system df -v --format '{{ .BuildCache | json }}' || :
+              echo ''
+              echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
+
+      - name: Download previous stage2
+        if: env.REUSE_STAGE2
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} || :
 
       - name: Stage 2 - Build using Dockerfile
         run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --file ./Dockerfile.stage2 .
-
-      - name: Stage 3 - Build using Dockerfile
-        run: |
-          docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} --file ./Dockerfile.stage3 .
-
-      - run: |
-            set -euo pipefail
-            docker create -ti --platform ${{ matrix.platform }} --name dummy ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} sh
-            mkdir -p build_result
-            docker cp -a dummy:/src/torch/. build_result
-            ls -lah build_result
-
-      - name: Create artifact
-        uses: actions/upload-artifact@v3
-
-        with:
-          name: pytorch_${{ matrix.pythonlabel }}_${{ matrix.platform }}
-          path: build_result
-          retention-days: 5
+          if [[ "$(docker images -q ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} 2> /dev/null)" == "" ]]; then
+            docker buildx build --platform=${{ matrix.platform }} --output "type=image,push=true" --build-arg pythonlabel=${{ matrix.pythonlabel }} --build-arg GITHUB_USER=${{ github.repository_owner }} --build-arg TORCHTAG=${{ env.TORCHTAG }} --build-arg FROMPLATFORM=${{ matrix.platform }} --build-arg FROMIMAGE=ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} --tag ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} --file ./Dockerfile.stage2 .
+          fi
 
   build_stage3:
     name: 'build pytorch within docker (stage3)'
@@ -188,13 +187,12 @@ jobs:
         shell: python
 
       - name: Cache docker
-        uses: actions/cache@v3
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
         with:
           key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage3
           restore-keys: |
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
-          path: |
-                /var/lib/docker
 
       - name: Stage 3 - Build using Dockerfile
         run: |
