@@ -13,7 +13,7 @@ env:
 
   REUSE_STAGE1: true
   REUSE_STAGE2: true
-  REUSE_STAGE3: true
+  REUSE_STAGE3: false
   REUSE_STAGE4: false
   REUSE_STAGE5: false
   REUSE_STAGE6: false
