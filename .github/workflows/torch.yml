@@ -13,6 +13,7 @@ env:
 
   REUSE_STAGE1: false
   REUSE_STAGE2: false
+  DOCKER_CACHE_ID: 1
 
 jobs:
   build_stage1:
@@ -54,9 +55,9 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage1
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage1
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
       - name: Download previous stage1
         if: env.REUSE_STAGE1 == true
@@ -119,9 +120,9 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage2
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage2
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
       - name: Verbose info
         run: |
@@ -190,9 +191,9 @@ jobs:
         uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
         with:
-          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage3
+          key: ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}-${{ hashFiles('**/Dockerfile.*') }}-${{ env.TAGNAME }}-stage3
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
+            ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
       - name: Stage 3 - Build using Dockerfile
         run: |
