@@ -6,6 +6,4 @@ FROM --platform=${FROMPLATFORM} ${FROMIMAGE}
 COPY arm.patch /src/torch/arm.patch
 RUN \
   cd pytorch && \
-  git apply --check ../arm.patch || : && \
-  git apply --reject --recount ../arm.patch && \
   timeout --preserve-status --kill-after=330m --verbose 300m python setup.py build || :
