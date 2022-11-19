@@ -65,7 +65,7 @@ jobs:
             ${{ runner.os }}-build-${{ env.TORCHTAG }}-${{ env.DOCKER_CACHE_ID }}-${{ matrix.platform }}-${{ matrix.pythonlabel }}
 
       - name: Download previous stage1
-        if: env.REUSE_STAGE1 == true
+        if: env.REUSE_STAGE1 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage1:${{ env.TAGNAME }} || :
 
@@ -140,7 +140,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage2
-        if: env.REUSE_STAGE2 == true
+        if: env.REUSE_STAGE2 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage2:${{ env.TAGNAME }} || :
 
@@ -205,7 +205,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage3
-        if: env.REUSE_STAGE3 == true
+        if: env.REUSE_STAGE3 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage3:${{ env.TAGNAME }} || :
 
@@ -270,7 +270,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage4
-        if: env.REUSE_STAGE4 == true
+        if: env.REUSE_STAGE4 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage4:${{ env.TAGNAME }} || :
 
@@ -335,7 +335,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage5
-        if: env.REUSE_STAGE5 == true
+        if: env.REUSE_STAGE5 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage5:${{ env.TAGNAME }} || :
 
@@ -400,7 +400,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
       - name: Download previous stage6
-        if: env.REUSE_STAGE6 == true
+        if: env.REUSE_STAGE6 == 'true'
         run: |
           docker pull ghcr.io/${{ github.repository_owner }}/pytorch-arm/stage6:${{ env.TAGNAME }} || :
 
