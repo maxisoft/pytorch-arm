@@ -20,6 +20,8 @@ env:
   REUSE_STAGE7: false
   DOCKER_CACHE_ID: 2
 
+  DEBUG: false
+
 concurrency:
   group: pytorch-arm-build
   cancel-in-progress: true
@@ -485,8 +487,16 @@ jobs:
 
       - name: Create artifact
         uses: actions/upload-artifact@v3
-
+        if: env.DEBUG == 'true'
+        continue-on-error: true
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: build_result
           retention-days: 5
+      
+      - name: Create artifact whl
+        uses: actions/upload-artifact@v3
+
+        with:
+          name: ${{ env.ARTIFACT_NAME }}_dist
+          path: build_result/pytorch/dist
