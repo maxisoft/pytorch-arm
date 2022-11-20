@@ -20,7 +20,7 @@ env:
   REUSE_STAGE7: false
   DOCKER_CACHE_ID: 2
 
-  DEBUG: false
+  FULL_ARTIFACT: false
 
 concurrency:
   group: pytorch-arm-build
@@ -487,7 +487,7 @@ jobs:
 
       - name: Create artifact
         uses: actions/upload-artifact@v3
-        if: env.DEBUG == 'true'
+        if: env.FULL_ARTIFACT == 'true'
         continue-on-error: true
         with:
           name: ${{ env.ARTIFACT_NAME }}
