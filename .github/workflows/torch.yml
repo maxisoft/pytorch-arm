@@ -461,6 +461,7 @@ jobs:
               env_file = os.getenv('GITHUB_ENV')
               with open(env_file, "a") as ef:
                 print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+                print('ARTIFACT_NAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
         shell: python
 
       - name: Cache docker
@@ -486,6 +487,6 @@ jobs:
         uses: actions/upload-artifact@v3
 
         with:
-          name: pytorch_${{ matrix.pythonlabel }}_${{ matrix.platform }}
+          name: ${{ env.ARTIFACT_NAME }}
           path: build_result
           retention-days: 5
