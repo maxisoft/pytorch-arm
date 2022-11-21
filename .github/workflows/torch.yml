@@ -11,16 +11,17 @@ env:
 # keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
   TORCHTAG: v1.13.0
 
-  REUSE_STAGE1: true
-  REUSE_STAGE2: true
-  REUSE_STAGE3: true
-  REUSE_STAGE4: true
-  REUSE_STAGE5: true
-  REUSE_STAGE6: true
+  REUSE_STAGE1: false
+  REUSE_STAGE2: false
+  REUSE_STAGE3: false
+  REUSE_STAGE4: false
+  REUSE_STAGE5: false
+  REUSE_STAGE6: false
   REUSE_STAGE7: false
-  DOCKER_CACHE_ID: 2
+  DOCKER_CACHE_ID: 3
 
   FULL_ARTIFACT: false
+  DO_THE_BUILD: true
 
 concurrency:
   group: pytorch-arm-build
@@ -28,6 +29,7 @@ concurrency:
 
 jobs:
   build_stage1:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage1)'
     runs-on: ubuntu-latest
     concurrency:
@@ -61,6 +63,7 @@ jobs:
               env_file = os.getenv('GITHUB_ENV')
               with open(env_file, "a") as ef:
                 print('TAGNAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
+                print('ARTIFACT_NAME=' + '${{ matrix.platform }}_${{ matrix.pythonlabel }}_${{ env.TORCHTAG }}'.replace('/', '_').replace(' ', '_').replace('-', '_'), file=ef)
         shell: python
 
       - name: Cache docker
@@ -93,6 +96,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
   build_stage2:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage2)'
     needs: [ build_stage1 ]
     runs-on: ubuntu-latest
@@ -159,6 +163,7 @@ jobs:
           fi
 
   build_stage3:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage3)'
     needs: [ build_stage2 ]
     runs-on: ubuntu-latest
@@ -225,6 +230,7 @@ jobs:
           fi
 
   build_stage4:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage4)'
     needs: [ build_stage3 ]
     runs-on: ubuntu-latest
@@ -291,6 +297,7 @@ jobs:
           fi
 
   build_stage5:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage5)'
     needs: [ build_stage4 ]
     runs-on: ubuntu-latest
@@ -357,6 +364,7 @@ jobs:
           fi
 
   build_stage6:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage6)'
     needs: [ build_stage5 ]
     runs-on: ubuntu-latest
@@ -423,6 +431,7 @@ jobs:
           fi
 
   build_stage7:
+    if: env.DO_THE_BUILD == 'true'
     name: 'build pytorch within docker (stage7)'
     needs: [ build_stage6 ]
     runs-on: ubuntu-latest
@@ -494,9 +503,11 @@ jobs:
           path: build_result
           retention-days: 5
       
-      - name: Create artifact whl
+      - name: Create artifact wheels
         uses: actions/upload-artifact@v3
 
         with:
           name: ${{ env.ARTIFACT_NAME }}_dist
-          path: build_result/pytorch/dist
+          path: |
+            build_result/pytorch/dist
+            build_result/wheels
