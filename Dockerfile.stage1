@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
   curl zip unzip libtool swig zlib1g-dev pkg-config git wget xz-utils \
   libopenblas-dev libblas-dev m4 cmake g++ gcc libssl-dev libczmq-dev redis libhiredis-dev libtbb-dev build-essential libgflags-dev libgoogle-glog-dev liblmdb-dev libnuma-dev && \
   mkdir -p wheels && \
-  python -m pip wheel -w wheels pyyaml 'numpy${NUMPY_VERSION}' && \
+  python -m pip wheel -w wheels pyyaml "'numpy${NUMPY_VERSION}'" && \
   python -m pip install wheels/* && \
   git clone --depth 100 -b ${TORCHTAG} -- https://github.com/pytorch/pytorch.git && \
   cd pytorch && \
