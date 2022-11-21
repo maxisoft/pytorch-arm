@@ -11,6 +11,9 @@ RUN \
   ls -lah build/ && \
   cd build/lib.*/torch || cd build/lib/torch && \
   ln -s _C.*.so _C.so || : && \
+  ln -s _C_flatbuffer.*.so _C_flatbuffer.so || : && \
+  cd ../functorch && \
+  ln -s _C.*.so _C.so || : && \
   #ln -s _dl.*.so _dl.so || : && \
   ls -lah && \
   cd ../../.. && \

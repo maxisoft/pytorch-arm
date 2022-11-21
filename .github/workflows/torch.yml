@@ -11,12 +11,12 @@ env:
 # keep in mind that `arm.patch` needs to work on this version (or recreate a new patch)
   TORCHTAG: v1.13.0
 
-  REUSE_STAGE1: false
-  REUSE_STAGE2: false
-  REUSE_STAGE3: false
-  REUSE_STAGE4: false
-  REUSE_STAGE5: false
-  REUSE_STAGE6: false
+  REUSE_STAGE1: true
+  REUSE_STAGE2: true
+  REUSE_STAGE3: true
+  REUSE_STAGE4: true
+  REUSE_STAGE5: true
+  REUSE_STAGE6: true
   REUSE_STAGE7: false
   DOCKER_CACHE_ID: 2
 
