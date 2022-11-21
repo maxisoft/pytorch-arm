@@ -21,7 +21,6 @@ env:
   DOCKER_CACHE_ID: 3
 
   FULL_ARTIFACT: false
-  DO_THE_BUILD: true
 
 concurrency:
   group: pytorch-arm-build
@@ -29,7 +28,7 @@ concurrency:
 
 jobs:
   build_stage1:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage1)'
     runs-on: ubuntu-latest
     concurrency:
@@ -96,7 +95,7 @@ jobs:
               echo '${{ github.run_id }}${{ github.run_number }}${{ github.run_attempt }}'
 
   build_stage2:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage2)'
     needs: [ build_stage1 ]
     runs-on: ubuntu-latest
@@ -163,7 +162,7 @@ jobs:
           fi
 
   build_stage3:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage3)'
     needs: [ build_stage2 ]
     runs-on: ubuntu-latest
@@ -230,7 +229,7 @@ jobs:
           fi
 
   build_stage4:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage4)'
     needs: [ build_stage3 ]
     runs-on: ubuntu-latest
@@ -297,7 +296,7 @@ jobs:
           fi
 
   build_stage5:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage5)'
     needs: [ build_stage4 ]
     runs-on: ubuntu-latest
@@ -364,7 +363,7 @@ jobs:
           fi
 
   build_stage6:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage6)'
     needs: [ build_stage5 ]
     runs-on: ubuntu-latest
@@ -431,7 +430,7 @@ jobs:
           fi
 
   build_stage7:
-    if: env.DO_THE_BUILD == 'true'
+    if: true
     name: 'build pytorch within docker (stage7)'
     needs: [ build_stage6 ]
     runs-on: ubuntu-latest
