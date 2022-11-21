@@ -19,8 +19,13 @@ python3 -c 'import torch; print(torch.nn.Conv2d(8, 1, (3, 3))(torch.randn(4, 8, 
 
 
 ## Notes
-- The source code is built using python:3.X-buster (with the python version one of 3.9/3.10/3.11) docker hub image (due to [#1](https://github.com/maxisoft/pytorch-arm/issues/1)).
-- One may needs numpy>=1.23<1.24 compatible version (wheels are also available for downloads) to call Tensor.numpy() method.
+- One may needs **numpy>=1.23<1.24** compatible version (wheels are also available for downloads) to call Tensor.numpy() method.
+- No support of armv6 (rasberry-pi 0) for now as I'd not be able to test it.
+- On archlinux arm one may use `aur/libopenblas` as compatible openblas provider
+
+## Dev Notes
+- The source code is built using old python:3.X-buster docker hub image due to [#1](https://github.com/maxisoft/pytorch-arm/issues/1).
+- In order to successfully build the wheels a [patch](https://github.com/maxisoft/pytorch-arm/blob/main/arm.patch) is applied to pytorch src code (may break the build of the future next releases)
 
 ## Build features summary
 ```
