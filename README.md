@@ -6,7 +6,7 @@ Use GitHub actions + Docker buildx to build recent **armv7/v8** (incl *rasberry-
 ## TL;DR
 ```sh
 # using debian:bullseye on armv7l
-apt-get install --no-install-recommends python3 python3-pip libblas3 libopenblas0 python3-typing-extensions
+apt-get install --no-install-recommends python3 python3-pip libblas3 libgomp1 libopenblas0 python3-typing-extensions
 python3 -m pip install https://github.com/maxisoft/pytorch-arm/releases/download/v1.0.0/numpy-1.23.5-cp39-cp39-linux_armv7l.whl # change the url if needed
 python3 -m pip install https://github.com/maxisoft/pytorch-arm/releases/download/v1.0.0/torch-1.13.0a0+git7c98e70-cp39-cp39-linux_armv7l.whl # change the url if needed
 
